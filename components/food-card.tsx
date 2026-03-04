@@ -25,7 +25,7 @@ export function FoodCard({ item, onPreview }: FoodCardProps) {
             className="object-cover"
           />
           {item.isPopular && (
-            <Badge className="absolute top-3 left-3 bg-accent text-accent-foreground">
+            <Badge className="absolute top-3 left-3 bg-[#2e304c] text-amber-50">
               Popular
             </Badge>
           )}
