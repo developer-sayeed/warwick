@@ -19,6 +19,7 @@ import { Product, Category, Settings } from "@/types";
 import { useLanguage } from "@/lib/language-context";
 import { CountdownTimer } from "@/components/countdown-timer";
 import { WelcomePopup } from "@/components/welcome-popup";
+import { AiAssistant } from "@/components/ai-assistant";
 
 export default function MenuPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -144,6 +145,7 @@ export default function MenuPage() {
     >
       {/* Welcome poppup */}
       <WelcomePopup settings={settings} />
+      <AiAssistant />
       {/* Header */}
       <header className="bg-primary text-primary-foreground sticky top-0 z-30">
         <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between">
@@ -439,83 +441,104 @@ export default function MenuPage() {
             </div>
 
             <div className="p-4 md:p-6">
-              <div className="grid grid-cols-3 gap-2 md:gap-4 mb-4 md:mb-6">
-                <div className="text-center p-2 md:p-4 bg-muted rounded-lg">
-                  <p className="text-[10px] md:text-sm text-muted-foreground mb-1">
-                    {t("Price", "السعر")}
-                  </p>
-
-                  {isDiscountActive(selectedProduct) ? (
-                    <div>
-                      <p className="font-bold text-primary text-sm md:text-base">
-                        {getDiscountedPrice(
-                          selectedProduct.price,
-                          selectedProduct.discount,
-                        )}{" "}
-                        {t("SAR", "ر.س")}
+              {(selectedProduct.price ||
+                selectedProduct.calories ||
+                selectedProduct.cookTime) && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-4 mb-4 md:mb-6">
+                  {selectedProduct.price && (
+                    <div className="text-center p-2 md:p-4 bg-muted rounded-lg">
+                      <p className="text-[10px] md:text-sm text-muted-foreground mb-1">
+                        {t("Price", "السعر")}
                       </p>
-                      <p className="text-[10px] md:text-xs text-muted-foreground line-through">
-                        {selectedProduct.price} {t("SAR", "ر.س")}
+
+                      {isDiscountActive(selectedProduct) ? (
+                        <div>
+                          <p className="font-bold text-primary text-sm md:text-base">
+                            {getDiscountedPrice(
+                              selectedProduct.price,
+                              selectedProduct.discount,
+                            )}{" "}
+                            {t("SAR", "ر.س")}
+                          </p>
+                          <p className="text-[10px] md:text-xs text-muted-foreground line-through">
+                            {selectedProduct.price} {t("SAR", "ر.س")}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="font-bold text-foreground text-sm md:text-base">
+                          {selectedProduct.price} {t("SAR", "ر.س")}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {selectedProduct.calories && (
+                    <div className="text-center p-2 md:p-4 bg-muted rounded-lg">
+                      <p className="text-[10px] md:text-sm text-muted-foreground mb-1">
+                        {t("Calories", "سعرات")}
+                      </p>
+                      <p className="font-bold text-foreground text-sm md:text-base">
+                        {selectedProduct.calories} {t("kcal", "سعرة")}
                       </p>
                     </div>
-                  ) : (
-                    <p className="font-bold text-foreground text-sm md:text-base">
-                      {selectedProduct.price} {t("SAR", "ر.س")}
-                    </p>
+                  )}
+
+                  {selectedProduct.cookTime && (
+                    <div className="text-center p-2 md:p-4 bg-muted rounded-lg">
+                      <p className="text-[10px] md:text-sm text-muted-foreground mb-1">
+                        {t("Cook Time", "وقت الطهي")}
+                      </p>
+                      <p className="font-bold text-foreground text-sm md:text-base">
+                        {selectedProduct.cookTime} {t("min", "د")}
+                      </p>
+                    </div>
                   )}
                 </div>
+              )}
 
-                <div className="text-center p-2 md:p-4 bg-muted rounded-lg">
-                  <p className="text-[10px] md:text-sm text-muted-foreground mb-1">
-                    {t("Calories", "سعرات")}
-                  </p>
-                  <p className="font-bold text-foreground text-sm md:text-base">
-                    {selectedProduct.calories} {t("kcal", "سعرة")}
-                  </p>
-                </div>
-
-                <div className="text-center p-2 md:p-4 bg-muted rounded-lg">
-                  <p className="text-[10px] md:text-sm text-muted-foreground mb-1">
-                    {t("Cook Time", "وقت الطهي")}
-                  </p>
-                  <p className="font-bold text-foreground text-sm md:text-base">
-                    {selectedProduct.cookTime} {t("min", "د")}
+              {(language === "ar" && selectedProduct.descriptionAr
+                ? selectedProduct.descriptionAr
+                : selectedProduct.description) && (
+                <div className="mb-4 md:mb-6">
+                  <h4 className="font-semibold text-foreground mb-2 text-sm md:text-base">
+                    {t("Description", "الوصف")}
+                  </h4>
+                  <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
+                    {language === "ar" && selectedProduct.descriptionAr
+                      ? selectedProduct.descriptionAr
+                      : selectedProduct.description}
                   </p>
                 </div>
-              </div>
+              )}
 
-              <div className="mb-4 md:mb-6">
-                <h4 className="font-semibold text-foreground mb-2 text-sm md:text-base">
-                  {t("Description", "الوصف")}
-                </h4>
-                <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
-                  {language === "ar" && selectedProduct.descriptionAr
-                    ? selectedProduct.descriptionAr
-                    : selectedProduct.description}
-                </p>
-              </div>
+              {(language === "ar" &&
+              selectedProduct.ingredientsAr &&
+              selectedProduct.ingredientsAr.length > 0
+                ? selectedProduct.ingredientsAr
+                : selectedProduct.ingredients
+              )?.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-foreground mb-2 md:mb-3 text-sm md:text-base">
+                    {t("Ingredients", "المكونات")}
+                  </h4>
 
-              <div>
-                <h4 className="font-semibold text-foreground mb-2 md:mb-3 text-sm md:text-base">
-                  {t("Ingredients", "المكونات")}
-                </h4>
-
-                <div className="flex flex-wrap gap-1.5 md:gap-2">
-                  {(language === "ar" &&
-                  selectedProduct.ingredientsAr &&
-                  selectedProduct.ingredientsAr.length > 0
-                    ? selectedProduct.ingredientsAr
-                    : selectedProduct.ingredients
-                  ).map((ingredient, index) => (
-                    <span
-                      key={index}
-                      className="px-2.5 md:px-4 py-1 md:py-2 bg-[#2E304C] text-white rounded-full text-xs md:text-sm cursor-pointer"
-                    >
-                      {ingredient}
-                    </span>
-                  ))}
+                  <div className="flex flex-wrap gap-1.5 md:gap-2">
+                    {(language === "ar" &&
+                    selectedProduct.ingredientsAr &&
+                    selectedProduct.ingredientsAr.length > 0
+                      ? selectedProduct.ingredientsAr
+                      : selectedProduct.ingredients
+                    ).map((ingredient, index) => (
+                      <span
+                        key={index}
+                        className="px-2.5 md:px-4 py-1 md:py-2 bg-[#2E304C] text-white rounded-full text-xs md:text-sm cursor-pointer"
+                      >
+                        {ingredient}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -528,7 +551,14 @@ export default function MenuPage() {
           <div className="flex flex-col-reverse md:flex-row items-center justify-between gap-4 text-center md:text-start">
             <p className="text-sm text-primary-foreground/60">
               &copy; Copyright All rights reserved - {new Date().getFullYear()}{" "}
-              {websiteTitle}.
+              {websiteTitle}
+              <a
+                className="text-white font-bold"
+                href="https://www.facebook.com/devs.sayeed"
+                target="_"
+              >
+                Develop by Riday
+              </a>
             </p>
 
             <div className="flex items-center justify-center md:justify-end gap-3">
