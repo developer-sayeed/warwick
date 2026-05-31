@@ -63,7 +63,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-primary  text-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-primary   flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-card border border-border rounded-xl p-6 md:p-8 shadow-2xl">
           <div className="text-center mb-8">
@@ -100,6 +100,16 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@example.com"
                 required
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                inputMode="email"
+                onPaste={(e) => e.preventDefault()}
+                onCopy={(e) => e.preventDefault()}
+                onCut={(e) => e.preventDefault()}
+                onDrop={(e) => e.preventDefault()}
+                onContextMenu={(e) => e.preventDefault()}
                 className="h-11 md:h-12 border border-[#2E304C]"
               />
             </div>
@@ -113,6 +123,16 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 required
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                inputMode="email"
+                onPaste={(e) => e.preventDefault()}
+                onCopy={(e) => e.preventDefault()}
+                onCut={(e) => e.preventDefault()}
+                onDrop={(e) => e.preventDefault()}
+                onContextMenu={(e) => e.preventDefault()}
                 className="h-11 md:h-12 border border-[#2E304C]"
               />
             </div>
