@@ -1,25 +1,17 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Globe,
-  ChevronLeft,
-  ChevronRight,
-  X,
-  Facebook,
-  Instagram,
-  Twitter,
-  Youtube,
-  Flame,
-} from "lucide-react";
+import { Globe, ChevronLeft, ChevronRight, X, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Product, Category, Settings } from "@/types";
 import { useLanguage } from "@/lib/language-context";
 import { CountdownTimer } from "@/components/countdown-timer";
 import { WelcomePopup } from "@/components/welcome-popup";
-import { AiAssistant } from "@/components/ai-assistant";
+
+const fallbackImage =
+  "https://i.pinimg.com/originals/df/15/2b/df152b83c5319606e166c3f936943f12.gif";
 
 export default function MenuPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -28,6 +20,7 @@ export default function MenuPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+
   const categoryScrollRef = useRef<HTMLDivElement>(null);
   const { language, setLanguage, t, isRtl } = useLanguage();
 
@@ -52,6 +45,39 @@ export default function MenuPage() {
   const getDiscountedPrice = (price: number, discount?: number) => {
     if (!discount || discount <= 0) return null;
     return Math.round(price * (1 - discount / 100));
+  };
+
+  const getProductCategory = (product: Product) => {
+    return product.category || (product as any).categorySlug;
+  };
+
+  const getImageSrc = (image?: string | null) => {
+    if (!image || typeof image !== "string") return fallbackImage;
+
+    const supportedFormats = [
+      ".jpg",
+      ".jpeg",
+      ".png",
+      ".webp",
+      ".gif",
+      ".avif",
+      ".svg",
+    ];
+
+    const cleanImage = image.split("?")[0].toLowerCase();
+
+    const isSupported =
+      image.startsWith("/") ||
+      image.startsWith("http://") ||
+      image.startsWith("https://");
+
+    if (!isSupported) return fallbackImage;
+
+    const hasSupportedFormat = supportedFormats.some((format) =>
+      cleanImage.endsWith(format),
+    );
+
+    return hasSupportedFormat ? image : fallbackImage;
   };
 
   useEffect(() => {
@@ -84,14 +110,31 @@ export default function MenuPage() {
     fetchData();
   }, []);
 
-  const filteredProducts =
-    selectedCategory === "all"
-      ? products
-      : selectedCategory === "offers"
-        ? products.filter((p) => isDiscountActive(p))
-        : products.filter((p) => p.category === selectedCategory);
+  const dealsProducts = useMemo(() => {
+    return products.filter((product) => isDiscountActive(product));
+  }, [products]);
 
-  const dealsProducts = products.filter((p) => isDiscountActive(p));
+  const visibleCategories = useMemo(() => {
+    return [...categories]
+      .filter((category) =>
+        products.some(
+          (product) => getProductCategory(product) === category.slug,
+        ),
+      )
+      .sort(() => Math.random() - 0.5);
+  }, [categories, products]);
+
+  const filteredProducts = useMemo(() => {
+    if (selectedCategory === "all") return products;
+
+    if (selectedCategory === "offers") {
+      return products.filter((product) => isDiscountActive(product));
+    }
+
+    return products.filter(
+      (product) => getProductCategory(product) === selectedCategory,
+    );
+  }, [selectedCategory, products]);
 
   const scrollCategories = (direction: "left" | "right") => {
     if (categoryScrollRef.current) {
@@ -127,14 +170,17 @@ export default function MenuPage() {
     language === "ar" && settings?.heroTitleAr
       ? settings.heroTitleAr
       : settings?.heroTitle;
+
   const heroSubtitle =
     language === "ar" && settings?.heroSubtitleAr
       ? settings.heroSubtitleAr
       : settings?.heroSubtitle;
+
   const heroContent =
     language === "ar" && settings?.heroContentAr
       ? settings.heroContentAr
       : settings?.heroContent;
+
   const websiteLogo = settings?.logo || "/warwick-logo.svg";
   const websiteTitle = settings?.restaurantName || "Warwick Restaurant";
 
@@ -143,10 +189,8 @@ export default function MenuPage() {
       className={`min-h-screen bg-background ${isRtl ? "font-arabic" : ""}`}
       dir={isRtl ? "rtl" : "ltr"}
     >
-      {/* Welcome poppup */}
       <WelcomePopup settings={settings} />
 
-      {/* Header */}
       <header className="bg-primary text-primary-foreground sticky top-0 z-30">
         <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
@@ -168,7 +212,7 @@ export default function MenuPage() {
           </Button>
         </div>
       </header>
-      {/* Main Code  */}
+
       <main className="container mx-auto px-4 py-8 md:py-12">
         <div className="text-center mb-8 md:mb-10">
           {heroSubtitle && (
@@ -234,7 +278,8 @@ export default function MenuPage() {
                 </span>
               </button>
             )}
-            {categories.map((category) => (
+
+            {visibleCategories.map((category) => (
               <button
                 key={category.slug}
                 onClick={() => setSelectedCategory(category.slug)}
@@ -267,7 +312,7 @@ export default function MenuPage() {
         {selectedCategory === "offers" &&
           settings?.dealsCountdown?.enabled &&
           settings?.dealsCountdown?.endDate && (
-            <div className="mb-6 md:mb-8 bg-[#2E304C] from-secondary/20 via-secondary/10 to-secondary/20 border border-secondary/30 rounded-xl  md:p-6 text-center">
+            <div className="mb-6 md:mb-8 bg-[#2E304C] border border-secondary/30 rounded-xl md:p-6 text-center">
               <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-6">
                 <div className="flex items-center gap-2 text-secondary">
                   <Flame className="w-5 h-5 md:w-6 md:h-6" />
@@ -275,6 +320,7 @@ export default function MenuPage() {
                     {t("Limited Time Offers!", "عروض لفترة محدودة!")}
                   </span>
                 </div>
+
                 <div className="text-foreground">
                   <CountdownTimer endDate={settings.dealsCountdown.endDate} />
                 </div>
@@ -297,10 +343,7 @@ export default function MenuPage() {
               >
                 <div className="relative w-24 h-24 md:w-32 md:h-32 flex-shrink-0">
                   <Image
-                    src={
-                      product.image ||
-                      "https://i.pinimg.com/originals/df/15/2b/df152b83c5319606e166c3f936943f12.gif"
-                    }
+                    src={getImageSrc(product.image)}
                     alt={
                       language === "ar" && product.nameAr
                         ? product.nameAr
@@ -308,6 +351,9 @@ export default function MenuPage() {
                     }
                     fill
                     className="object-cover rounded-lg"
+                    onError={(e) => {
+                      e.currentTarget.src = fallbackImage;
+                    }}
                   />
 
                   {activeDiscount && (
@@ -364,23 +410,21 @@ export default function MenuPage() {
         )}
       </main>
 
-      {/* single Product  */}
       {selectedProduct && (
         <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
           onClick={() => setSelectedProduct(null)}
         >
           <div
-            className={`bg-background rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto ${isRtl ? "font-arabic" : ""}`}
+            className={`bg-background rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto ${
+              isRtl ? "font-arabic" : ""
+            }`}
             onClick={(e) => e.stopPropagation()}
             dir={isRtl ? "rtl" : "ltr"}
           >
             <div className="relative h-56 md:h-72 overflow-hidden rounded-t-2xl">
               <Image
-                src={
-                  selectedProduct.image ||
-                  "https://i.pinimg.com/originals/df/15/2b/df152b83c5319606e166c3f936943f12.gif"
-                }
+                src={getImageSrc(selectedProduct.image)}
                 alt={
                   language === "ar" && selectedProduct.nameAr
                     ? selectedProduct.nameAr
@@ -388,32 +432,34 @@ export default function MenuPage() {
                 }
                 fill
                 className="object-cover transition-transform duration-500 hover:scale-105"
+                onError={(e) => {
+                  e.currentTarget.src = fallbackImage;
+                }}
               />
 
-              {/* Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
-              {/* Top Left Badges */}
               <div className="absolute top-4 start-4 flex items-center gap-2 z-20">
-                {/* Category */}
                 <span className="backdrop-blur-md bg-[#2E304C] border border-white/20 text-white px-3 py-1 rounded-full text-xs md:text-sm font-medium shadow-lg">
                   {categories.find(
-                    (cat) => cat.slug === selectedProduct.category,
+                    (cat) => cat.slug === getProductCategory(selectedProduct),
                   )
                     ? language === "ar" &&
                       categories.find(
-                        (cat) => cat.slug === selectedProduct.category,
+                        (cat) =>
+                          cat.slug === getProductCategory(selectedProduct),
                       )?.nameAr
                       ? categories.find(
-                          (cat) => cat.slug === selectedProduct.category,
+                          (cat) =>
+                            cat.slug === getProductCategory(selectedProduct),
                         )?.nameAr
                       : categories.find(
-                          (cat) => cat.slug === selectedProduct.category,
+                          (cat) =>
+                            cat.slug === getProductCategory(selectedProduct),
                         )?.name
-                    : selectedProduct.category}
+                    : getProductCategory(selectedProduct)}
                 </span>
 
-                {/* Discount */}
                 {isDiscountActive(selectedProduct) &&
                   selectedProduct.discount && (
                     <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1 rounded-full text-xs md:text-sm font-bold shadow-lg animate-pulse">
@@ -422,7 +468,6 @@ export default function MenuPage() {
                   )}
               </div>
 
-              {/* Close Button */}
               <button
                 onClick={() => setSelectedProduct(null)}
                 className="absolute top-4 end-4 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md text-white flex items-center justify-center hover:bg-[#2E304C] transition-all duration-300 z-20 cursor-pointer"
@@ -430,7 +475,6 @@ export default function MenuPage() {
                 <X className="w-5 h-5" />
               </button>
 
-              {/* Product Name */}
               <div className="absolute bottom-4 start-4 end-4 z-20">
                 <h3 className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg">
                   {language === "ar" && selectedProduct.nameAr
@@ -544,18 +588,17 @@ export default function MenuPage() {
         </div>
       )}
 
-      {/* Footer */}
-
       <footer className="bg-primary text-primary-foreground mt-12 md:mt-16">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col-reverse md:flex-row items-center justify-between gap-4 text-center md:text-start">
             <p className="text-sm text-primary-foreground/60">
               &copy; Copyright All rights reserved - {new Date().getFullYear()}{" "}
-              {websiteTitle}
+              {websiteTitle}{" "}
               <a
                 className="text-white font-bold"
                 href="https://www.facebook.com/devs.sayeed"
-                target="_"
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 Develop by Riday
               </a>
@@ -570,12 +613,7 @@ export default function MenuPage() {
                   className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:opacity-80 transition"
                   aria-label="Facebook"
                 >
-                  <svg viewBox="0 0 24 24" className="w-5 h-5">
-                    <path
-                      fill="#1877F2"
-                      d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.413c0-3.025 1.792-4.697 4.533-4.697 1.313 0 2.686.236 2.686.236v2.971H15.83c-1.491 0-1.955.931-1.955 1.887v2.263h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"
-                    />
-                  </svg>
+                  Facebook
                 </a>
               )}
 
@@ -587,38 +625,7 @@ export default function MenuPage() {
                   className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:opacity-80 transition"
                   aria-label="Instagram"
                 >
-                  <svg viewBox="0 0 24 24" className="w-5 h-5">
-                    <defs>
-                      <linearGradient
-                        id="igGradient"
-                        x1="0"
-                        y1="24"
-                        x2="24"
-                        y2="0"
-                      >
-                        <stop offset="0" stopColor="#FEDA75" />
-                        <stop offset="0.25" stopColor="#FA7E1E" />
-                        <stop offset="0.5" stopColor="#D62976" />
-                        <stop offset="0.75" stopColor="#962FBF" />
-                        <stop offset="1" stopColor="#4F5BD5" />
-                      </linearGradient>
-                    </defs>
-                    <rect
-                      width="24"
-                      height="24"
-                      rx="6"
-                      fill="url(#igGradient)"
-                    />
-                    <path
-                      fill="#fff"
-                      d="M12 7.2A4.8 4.8 0 1 0 12 16.8 4.8 4.8 0 0 0 12 7.2zm0 7.9A3.1 3.1 0 1 1 12 8.9a3.1 3.1 0 0 1 0 6.2z"
-                    />
-                    <circle cx="17.4" cy="6.6" r="1.1" fill="#fff" />
-                    <path
-                      fill="#fff"
-                      d="M16.8 2H7.2A5.2 5.2 0 0 0 2 7.2v9.6A5.2 5.2 0 0 0 7.2 22h9.6a5.2 5.2 0 0 0 5.2-5.2V7.2A5.2 5.2 0 0 0 16.8 2zm3.4 14.8a3.4 3.4 0 0 1-3.4 3.4H7.2a3.4 3.4 0 0 1-3.4-3.4V7.2a3.4 3.4 0 0 1 3.4-3.4h9.6a3.4 3.4 0 0 1 3.4 3.4v9.6z"
-                    />
-                  </svg>
+                  Instagram
                 </a>
               )}
 
@@ -630,21 +637,7 @@ export default function MenuPage() {
                   className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:opacity-80 transition"
                   aria-label="TikTok"
                 >
-                  <svg viewBox="0 0 24 24" className="w-5 h-5">
-                    <rect width="24" height="24" rx="6" fill="#000" />
-                    <path
-                      fill="#25F4EE"
-                      d="M10.6 10.3v1.9a3.3 3.3 0 1 0 3.3 3.3V7.8c.8.8 1.8 1.3 3 1.4V6.8c-1.7-.2-3-1.5-3.2-3.2h-2.4v11.9a1.1 1.1 0 1 1-1.1-1.1c.1 0 .3 0 .4.1v-4.2z"
-                    />
-                    <path
-                      fill="#FE2C55"
-                      d="M11.6 9.6v1.9a3.3 3.3 0 1 0 3.3 3.3V8.8c.8.8 1.8 1.3 3 1.4V7.8c-1.7-.2-3-1.5-3.2-3.2h-2.4v11.9a1.1 1.1 0 1 1-1.1-1.1c.1 0 .3 0 .4.1V9.6z"
-                    />
-                    <path
-                      fill="#fff"
-                      d="M11.1 9.9v2.2a3.3 3.3 0 1 0 3.3 3.3V7.4c.8.8 1.8 1.3 3 1.4V6.4c-1.7-.2-3-1.5-3.2-3.2h-2.4v11.9a1.1 1.1 0 1 1-1.1-1.1c.1 0 .3 0 .4.1V9.9z"
-                    />
-                  </svg>
+                  TikTok
                 </a>
               )}
 
@@ -656,13 +649,7 @@ export default function MenuPage() {
                   className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:opacity-80 transition"
                   aria-label="YouTube"
                 >
-                  <svg viewBox="0 0 24 24" className="w-6 h-6">
-                    <path
-                      fill="#FF0000"
-                      d="M23.5 6.2s-.2-1.7-.9-2.4c-.9-.9-1.9-.9-2.4-1C16.8 2.5 12 2.5 12 2.5h0s-4.8 0-8.2.3c-.5.1-1.5.1-2.4 1C.7 4.5.5 6.2.5 6.2S.2 8.2.2 10.2v1.9c0 2 .3 4 .3 4s.2 1.7.9 2.4c.9.9 2.1.9 2.6 1 1.9.2 8 .3 8 .3s4.8 0 8.2-.3c.5-.1 1.5-.1 2.4-1 .7-.7.9-2.4.9-2.4s.3-2 .3-4v-1.9c0-2-.3-4-.3-4z"
-                    />
-                    <path fill="#fff" d="M9.8 14.9V7.8l6.3 3.6-6.3 3.5z" />
-                  </svg>
+                  YouTube
                 </a>
               )}
             </div>
