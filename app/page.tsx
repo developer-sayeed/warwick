@@ -145,7 +145,7 @@ export default function MenuPage() {
     >
       {/* Welcome poppup */}
       <WelcomePopup settings={settings} />
-      <AiAssistant />
+
       {/* Header */}
       <header className="bg-primary text-primary-foreground sticky top-0 z-30">
         <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between">
@@ -444,7 +444,7 @@ export default function MenuPage() {
               {(selectedProduct.price ||
                 selectedProduct.calories ||
                 selectedProduct.cookTime) && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-4 mb-4 md:mb-6">
+                <div className="grid grid-cols-3 sm:grid-cols-3 gap-2 md:gap-4 mb-4 md:mb-6">
                   {selectedProduct.price && (
                     <div className="text-center p-2 md:p-4 bg-muted rounded-lg">
                       <p className="text-[10px] md:text-sm text-muted-foreground mb-1">

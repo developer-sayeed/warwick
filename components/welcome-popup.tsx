@@ -76,7 +76,7 @@ export function WelcomePopup({ settings }: WelcomePopupProps) {
           >
             <X className="w-4 h-4" />
           </button>
-          <div className="bg-amber-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
             <Gift className="w-8 h-8 text-secondary " />
           </div>
           <h2 className="text-2xl md:text-3xl font-bold mb-2">

@@ -52,6 +52,8 @@ export default function RootLayout({
           </LanguageProvider>
         </SessionProvider>
         {process.env.NODE_ENV === "production" && <Analytics />}
+        {/* Ai Agent Chat */}
+        <script src="https://www.noupe.com/embed/019e8200a4ce7049a18aba627245100801ea.js"></script>
       </body>
     </html>
   );
